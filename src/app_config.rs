@@ -3,7 +3,8 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
-    pub api_secret: String
+    pub api_secret: String,
+    pub telegram_bot_token: String
 }
 
 impl AppConfig {

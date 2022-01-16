@@ -39,8 +39,12 @@ fn rocket() -> _ {
     };
     println!("{:?}", app_config);
 
+    let telegram_client = TelegramClient {
+        bot_api_token: app_config.telegram_bot_token.clone()
+    };
+
     rocket::build()
         .mount("/", routes![index])
-        .manage(TelegramClient {})
+        .manage(telegram_client)
         .manage(app_config)
 }
