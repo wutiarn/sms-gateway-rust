@@ -1,11 +1,8 @@
 use std::error::Error;
-use std::io::Read;
 use hyper::{Body, Client, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
 use hyper_tls::HttpsConnector;
-use rocket::futures::StreamExt;
-use rocket::http::Header;
 use crate::dto::telegram::{SendMessageRequest, SendMessageResponse};
 
 pub struct TelegramClient {
@@ -34,13 +31,13 @@ impl TelegramClient {
         let dto_json = serde_json::to_string(&dto)?;
         let request = Request::builder()
             .method(Method::POST)
-            .uri(format!("https://api.telegram.org/bot{}/sendMessage", self.bot_api_token))
+            .uri(format!("https://api.telegram.org2/bot{}/sendMessage", self.bot_api_token))
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(dto_json))?;
 
-        let mut response = self.http_client.request(request).await?;
-        let response_bytes = hyper::body::to_bytes(response.into_body()).await?;
-        let response_str = String::from_utf8(response_bytes.to_vec())?;
+        let response = self.http_client.request(request).await?;
+        let response_bytes = hyper::body::to_bytes(response).await?;
+        let response_str = String::from_utf8_lossy(response_bytes.as_ref());
         let response_dto: SendMessageResponse = serde_json::from_slice(&response_bytes)?;
 
         println!("Telegram response: {}", response_str);
