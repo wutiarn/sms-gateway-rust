@@ -4,8 +4,9 @@ use hyper::{Body, Client, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
 use hyper_tls::HttpsConnector;
+use rocket::futures::StreamExt;
 use rocket::http::Header;
-use crate::dto::telegram::SendMessageRequest;
+use crate::dto::telegram::{SendMessageRequest, SendMessageResponse};
 
 pub struct TelegramClient {
     bot_api_token: String,
@@ -25,8 +26,7 @@ impl TelegramClient {
             bot_api_token,
         }
     }
-    pub async fn send_notification(&self, message: &str) -> Result<String, Box<dyn Error>> {
-        println!("Sending message: {}", message);
+    pub async fn send_notification(&self, message: &str) -> Result<(), Box<dyn Error>> {
         let dto = SendMessageRequest {
             text: &message,
             chat_id: &self.recipient_id
@@ -38,9 +38,14 @@ impl TelegramClient {
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(dto_json))?;
 
-        let response = self.http_client.request(request).await?;
-        let response_body = hyper::body::to_bytes(response.into_body()).await?;
-        println!("{:?}", response_body);
-        Ok("Test".to_string())
+        let mut response = self.http_client.request(request).await?;
+        let response_bytes = hyper::body::to_bytes(response.into_body()).await?;
+        let response_str = String::from_utf8(response_bytes.to_vec())?;
+        let response_dto: SendMessageResponse = serde_json::from_slice(&response_bytes)?;
+
+        println!("Telegram response: {}", response_str);
+        println!("Sent message id: {}", response_dto.result.message_id);
+
+        Ok(())
     }
 }

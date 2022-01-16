@@ -1,12 +1,12 @@
-
+use lazy_static::lazy_static;
 use rocket::{Data, Request};
 use rocket::data::{FromData, Outcome};
 use rocket::http::Status;
 use rocket::outcome::Outcome::{Failure, Success};
-use time::PrimitiveDateTime;
+use serde::Serialize;
 use time::format_description;
 use time::format_description::FormatItem;
-use lazy_static::lazy_static;
+use time::PrimitiveDateTime;
 
 const DELIMITER: &str = "^~";
 
@@ -14,7 +14,7 @@ lazy_static! {
     static ref DATETIME_FORMAT: Vec<FormatItem<'static>> = format_description::parse("[day].[month].[year] [hour].[minute]").unwrap();
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SmsMessageDto {
     secret: String,
     pub from: String,

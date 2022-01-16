@@ -17,13 +17,15 @@ mod app_config;
 async fn handle_sms(
     message: SmsMessageDto,
     tg: &State<TelegramClient>,
-    app_config: &State<AppConfig>
+    app_config: &State<AppConfig>,
 ) -> Result<&'static str, Custom<&'static str>> {
-    println!("Body is: {:?}", message);
+    println!("Hook payload: {}", serde_json::to_string(&message)
+        .unwrap_or_else(|e| { e.to_string() }));
     if !message.validate_secret(&app_config.api_secret) {
         return Err(Custom(Status::Forbidden, "Token is incorrect"));
     }
-    tg.send_notification("test").await;
+    let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
+    tg.send_notification(&tg_message_text).await;
     Ok("OK")
 }
 
@@ -37,7 +39,7 @@ fn rocket() -> _ {
 
     let telegram_client = TelegramClient::new(
         app_config.telegram_bot_token.clone(),
-        app_config.telegram_recipient_id.clone()
+        app_config.telegram_recipient_id.clone(),
     );
 
     rocket::build()
