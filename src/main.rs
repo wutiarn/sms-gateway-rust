@@ -25,7 +25,7 @@ async fn handle_sms(
         return Err(Custom(Status::Forbidden, "Token is incorrect"));
     }
     let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
-    tg.send_notification(&tg_message_text).await;
+    tg.send_notification(&tg_message_text).await.unwrap();
     Ok("OK")
 }
 

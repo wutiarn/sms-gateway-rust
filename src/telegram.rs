@@ -26,19 +26,19 @@ impl TelegramClient {
     pub async fn send_notification(&self, message: &str) -> Result<(), Box<dyn Error>> {
         let dto = SendMessageRequest {
             text: &message,
-            chat_id: &self.recipient_id
+            chat_id: &self.recipient_id,
         };
         let dto_json = serde_json::to_string(&dto)?;
         let request = Request::builder()
             .method(Method::POST)
-            .uri(format!("https://api.telegram.org2/bot{}/sendMessage", self.bot_api_token))
+            .uri(format!("https://api.telegram.org/bot{}/sendMessage", self.bot_api_token))
             .header(CONTENT_TYPE, "application/json")
             .body(Body::from(dto_json))?;
 
         let response = self.http_client.request(request).await?;
-        let response_bytes = hyper::body::to_bytes(response).await?;
-        let response_str = String::from_utf8_lossy(response_bytes.as_ref());
-        let response_dto: SendMessageResponse = serde_json::from_slice(&response_bytes)?;
+        let resp_bytes = hyper::body::to_bytes(response).await?;
+        let response_str = String::from_utf8_lossy(&resp_bytes);
+        let response_dto: SendMessageResponse = serde_json::from_slice(&resp_bytes)?;
 
         println!("Telegram response: {}", response_str);
         println!("Sent message id: {}", response_dto.result.message_id);

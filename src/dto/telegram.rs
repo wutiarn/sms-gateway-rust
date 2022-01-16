@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde::Deserialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SendMessageRequest<'a> {
     pub text: &'a str,
     pub chat_id: &'a str
