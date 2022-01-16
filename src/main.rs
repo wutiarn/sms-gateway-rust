@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+use std::collections::HashMap;
 use std::error::Error;
 
 use rocket::http::Status;
@@ -10,14 +11,20 @@ use rocket::State;
 
 use dto::SmsMessageDto;
 use telegram::TelegramClient;
+use crate::app_config::{AppConfig};
 
 mod dto;
 mod telegram;
+mod app_config;
 
 #[post("/hooks/sms", data = "<message>")]
-fn index(message: SmsMessageDto, tg: &State<TelegramClient>) -> Result<&'static str, Custom<&'static str>> {
+fn index(
+    message: SmsMessageDto,
+    tg: &State<TelegramClient>,
+    app_config: &State<AppConfig>
+) -> Result<&'static str, Custom<&'static str>> {
     println!("Body is: {:?}", message);
-    if !message.validate_secret("131ba000-393d-4dea-a5d5-68e6558c0c68") {
+    if !message.validate_secret(&app_config.api_secret) {
         return Err(Custom(Status::Forbidden, "Token is incorrect"));
     }
     tg.send_notification("test");
@@ -26,7 +33,14 @@ fn index(message: SmsMessageDto, tg: &State<TelegramClient>) -> Result<&'static 
 
 #[launch]
 fn rocket() -> _ {
+    let app_config = match AppConfig::new() {
+        Ok(it) => it,
+        Err(e) => panic!("Failed to construct app config: {}", e)
+    };
+    println!("{:?}", app_config);
+
     rocket::build()
         .mount("/", routes![index])
         .manage(TelegramClient {})
+        .manage(app_config)
 }
