@@ -1,9 +1,42 @@
+use hyper::{Body, Client, Method, Request};
+use hyper::client::HttpConnector;
+use hyper::header::CONTENT_TYPE;
+use hyper_tls::HttpsConnector;
+use rocket::http::Header;
+use crate::dto::telegram::SendMessageRequest;
+
 pub struct TelegramClient {
-    pub bot_api_token: String
+    bot_api_token: String,
+    recipient_id: String,
+    http_client: Client<HttpsConnector<HttpConnector>>,
 }
 
 impl TelegramClient {
-    pub fn send_notification(&self, message: &str) {
-        println!("Sending message: {}", message)
+    pub fn new(bot_api_token: String, recipient_id: String) -> Self {
+        let https = HttpsConnector::new();
+        let client = Client::builder()
+            .build(https);
+
+        TelegramClient {
+            http_client: client,
+            recipient_id,
+            bot_api_token,
+        }
+    }
+    pub async fn send_notification(&self, message: &str) {
+        println!("Sending message: {}", message);
+        let dto = SendMessageRequest {
+            text: &message,
+            chat_id: &self.recipient_id
+        };
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri(format!("https://api.telegram.org/bot{}/sendMessage", self.bot_api_token))
+            .header(CONTENT_TYPE, "application/json")
+            .body(Body::from(dto))?;
+
+        let response = self.http_client.request(request).await?;
+        println!("{:?}", response)
+        ;
     }
 }
