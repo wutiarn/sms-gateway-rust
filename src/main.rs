@@ -14,7 +14,7 @@ mod telegram;
 mod app_config;
 
 #[post("/hooks/sms", data = "<message>")]
-fn index(
+async fn handle_sms(
     message: SmsMessageDto,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>
@@ -23,7 +23,7 @@ fn index(
     if !message.validate_secret(&app_config.api_secret) {
         return Err(Custom(Status::Forbidden, "Token is incorrect"));
     }
-    tg.send_notification("test");
+    tg.send_notification("test").await;
     Ok("OK")
 }
 
@@ -41,7 +41,7 @@ fn rocket() -> _ {
     );
 
     rocket::build()
-        .mount("/", routes![index])
+        .mount("/", routes![handle_sms])
         .manage(telegram_client)
         .manage(app_config)
 }

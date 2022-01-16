@@ -1,3 +1,4 @@
+use std::error::Error;
 use hyper::{Body, Client, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
@@ -23,20 +24,21 @@ impl TelegramClient {
             bot_api_token,
         }
     }
-    pub async fn send_notification(&self, message: &str) {
+    pub async fn send_notification(&self, message: &str) -> Result<String, Box<dyn Error>> {
         println!("Sending message: {}", message);
         let dto = SendMessageRequest {
             text: &message,
             chat_id: &self.recipient_id
         };
+        let dto_json = serde_json::to_string(&dto)?;
         let request = Request::builder()
             .method(Method::POST)
             .uri(format!("https://api.telegram.org/bot{}/sendMessage", self.bot_api_token))
             .header(CONTENT_TYPE, "application/json")
-            .body(Body::from(dto))?;
+            .body(Body::from(dto_json))?;
 
         let response = self.http_client.request(request).await?;
-        println!("{:?}", response)
-        ;
+        println!("{:?}", response);
+        Ok("Test".to_string())
     }
 }
