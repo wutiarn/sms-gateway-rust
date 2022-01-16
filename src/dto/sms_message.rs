@@ -1,15 +1,11 @@
-use std::time::SystemTime;
 
 use rocket::{Data, Request};
 use rocket::data::{FromData, Outcome};
 use rocket::http::Status;
 use rocket::outcome::Outcome::{Failure, Success};
-use rocket::tokio::io::AsyncReadExt;
-use time::{Date, PrimitiveDateTime};
-use time::error::Parse;
+use time::PrimitiveDateTime;
 use time::format_description;
 use time::format_description::FormatItem;
-use time::parsing::Parsed;
 use lazy_static::lazy_static;
 
 const DELIMITER: &str = "^~";

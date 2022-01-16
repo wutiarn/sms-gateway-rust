@@ -1,11 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
-use std::collections::HashMap;
-use std::error::Error;
-
 use rocket::http::Status;
-use rocket::response::status::Accepted;
 use rocket::response::status::Custom;
 use rocket::State;
 
@@ -37,7 +33,7 @@ fn rocket() -> _ {
         Ok(it) => it,
         Err(e) => panic!("Failed to construct app config: {}", e)
     };
-    println!("{:?}", app_config);
+    println!("{:#?}", app_config);
 
     let telegram_client = TelegramClient {
         bot_api_token: app_config.telegram_bot_token.clone()
