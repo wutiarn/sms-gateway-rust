@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::io::Read;
 use hyper::{Body, Client, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
@@ -38,7 +39,8 @@ impl TelegramClient {
             .body(Body::from(dto_json))?;
 
         let response = self.http_client.request(request).await?;
-        println!("{:?}", response);
+        let response_body = hyper::body::to_bytes(response.into_body()).await?;
+        println!("{:?}", response_body);
         Ok("Test".to_string())
     }
 }
