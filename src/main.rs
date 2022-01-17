@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+use anyhow::anyhow;
 use env_logger::Target;
 use log::{info, LevelFilter};
 use rocket::http::Status;
@@ -26,7 +27,9 @@ async fn handle_sms(
     info!("Hook payload: {}", serde_json::to_string(&message)
         .unwrap_or_else(|e| { e.to_string() }));
     if !message.validate_secret(&app_config.api_secret) {
-        return Ok((Status::Forbidden, "Token is incorrect"));
+        return AppError::new(anyhow!("Token is incorrect"))
+            .with_status(Status::Forbidden)
+            .err();
     }
     let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
     tg.send_notification(&tg_message_text).await?;
