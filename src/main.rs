@@ -11,7 +11,7 @@ use dto::SmsMessageDto;
 use telegram::TelegramClient;
 
 use crate::app_config::AppConfig;
-use crate::error::AppError;
+use crate::error::HttpError;
 
 mod dto;
 mod telegram;
@@ -23,11 +23,11 @@ async fn handle_sms(
     message: SmsMessageDto,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
-) -> Result<(Status, &'static str), AppError> {
+) -> Result<(Status, &'static str), HttpError> {
     info!("Hook payload: {}", serde_json::to_string(&message)
         .unwrap_or_else(|e| { e.to_string() }));
     if !message.validate_secret(&app_config.api_secret) {
-        return AppError::new(anyhow!("Token is incorrect"))
+        return HttpError::new(anyhow!("Token is incorrect"))
             .with_status(Status::Forbidden)
             .err();
     }

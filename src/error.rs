@@ -5,14 +5,14 @@ use rocket::http::{Header, Status};
 use rocket::response::Responder;
 use log::info;
 
-pub struct AppError {
+pub struct HttpError {
     error: anyhow::Error,
     status_code: Status,
 }
 
-impl AppError {
+impl HttpError {
     pub fn new(error: anyhow::Error) -> Self {
-        AppError {
+        HttpError {
             error,
             status_code: Status::InternalServerError
         }
@@ -28,13 +28,13 @@ impl AppError {
     }
 }
 
-impl From<anyhow::Error> for AppError {
+impl From<anyhow::Error> for HttpError {
     fn from(e: Error) -> Self {
-        AppError::new(e)
+        HttpError::new(e)
     }
 }
 
-impl<'r, 'o: 'r> Responder<'r, 'o> for AppError {
+impl<'r, 'o: 'r> Responder<'r, 'o> for HttpError {
     fn respond_to(self, _: &'r Request) -> rocket::response::Result<'o> {
         let response_body = format!("{}: {}", self.status_code.to_string(), self.error.to_string());
         info!("Responding with error: {}", response_body);
