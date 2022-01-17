@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+use anyhow::anyhow;
 use env_logger::Target;
 use log::{info, LevelFilter};
 use rocket::http::Status;
@@ -10,31 +11,29 @@ use dto::SmsMessageDto;
 use telegram::TelegramClient;
 
 use crate::app_config::AppConfig;
+use crate::error::HttpError;
 
 mod dto;
 mod telegram;
 mod app_config;
+mod error;
 
 #[post("/hooks/sms", data = "<message>")]
 async fn handle_sms(
     message: SmsMessageDto,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
-) -> Result<&'static str, (Status, &'static str)> {
+) -> Result<(Status, &'static str), HttpError> {
     info!("Hook payload: {}", serde_json::to_string(&message)
         .unwrap_or_else(|e| { e.to_string() }));
     if !message.validate_secret(&app_config.api_secret) {
-        return Err((Status::Forbidden, "Token is incorrect"));
+        return HttpError::new(anyhow!("Token is incorrect"))
+            .with_status(Status::Forbidden)
+            .err();
     }
     let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
-    match tg.send_notification(&tg_message_text).await {
-        Ok(_) => {}
-        Err(e) => {
-            log::error!("Failed to send notification: {}", e);
-            return Err((Status::InternalServerError, "Failed to send telegram message"))
-        }
-    };
-    Ok("OK")
+    tg.send_notification(&tg_message_text).await?;
+    Ok((Status::Ok, "OK"))
 }
 
 #[launch]
