@@ -4,7 +4,7 @@ use rocket::data::{FromData, Outcome};
 use rocket::http::Status;
 use rocket::outcome::Outcome::{Failure, Success};
 use serde::Serialize;
-use thiserror::Error;
+use anyhow::{anyhow, Error};
 use time::format_description;
 use time::format_description::FormatItem;
 use time::PrimitiveDateTime;
@@ -29,33 +29,23 @@ impl SmsMessageDto {
     }
 }
 
-#[derive(Error, Debug)]
-pub enum SmsMessageParseError {
-    #[error("Payload is too large")]
-    TooLarge,
-    #[error("Failed to parse datetime")]
-    DateTimeParseFailed(#[source] time::error::Parse),
-    #[error("IO Error")]
-    Io(#[source] std::io::Error),
-}
-
 #[rocket::async_trait]
 impl<'r> FromData<'r> for SmsMessageDto {
-    type Error = SmsMessageParseError;
+    type Error = Error;
 
     async fn from_data(req: &'r Request<'_>, data: Data<'r>) -> Outcome<'r, Self> {
         let limit = req.limits().get("string").unwrap();
         let body_str = match data.open(limit).into_string().await {
             Ok(string) if string.is_complete() => string.into_inner(),
-            Ok(_) => return Failure((Status::PayloadTooLarge, SmsMessageParseError::TooLarge)),
-            Err(e) => return Failure((Status::InternalServerError, SmsMessageParseError::Io(e)))
+            Ok(_) => return Failure((Status::PayloadTooLarge, anyhow!("Payload is too large"))),
+            Err(e) => return Failure((Status::InternalServerError, e.into()))
         };
         let parts: Vec<&str> = body_str.split(DELIMITER).collect();
 
         let datetime_str = format!("{} {}", parts[3], parts[4]);
         let datetime = match PrimitiveDateTime::parse(&datetime_str, &DATETIME_FORMAT) {
             Ok(it) => it,
-            Err(e) => return Failure((Status::InternalServerError, SmsMessageParseError::DateTimeParseFailed(e)))
+            Err(e) => return Failure((Status::InternalServerError, e.into()))
         };
 
         Success(
