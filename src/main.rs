@@ -4,7 +4,6 @@ extern crate rocket;
 use env_logger::Target;
 use log::{info, LevelFilter};
 use rocket::http::Status;
-use rocket::response::status::Custom;
 use rocket::State;
 
 use dto::SmsMessageDto;
@@ -21,11 +20,11 @@ async fn handle_sms(
     message: SmsMessageDto,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
-) -> Result<&'static str, Custom<&'static str>> {
+) -> Result<&'static str, (Status, &'static str)> {
     info!("Hook payload: {}", serde_json::to_string(&message)
         .unwrap_or_else(|e| { e.to_string() }));
     if !message.validate_secret(&app_config.api_secret) {
-        return Err(Custom(Status::Forbidden, "Token is incorrect"));
+        return Err((Status::Forbidden, "Token is incorrect"));
     }
     let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
     tg.send_notification(&tg_message_text).await.unwrap();
