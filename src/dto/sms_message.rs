@@ -4,6 +4,7 @@ use rocket::data::{FromData, Outcome};
 use rocket::http::Status;
 use rocket::outcome::Outcome::{Failure, Success};
 use serde::Serialize;
+use thiserror::Error;
 use time::format_description;
 use time::format_description::FormatItem;
 use time::PrimitiveDateTime;
@@ -28,10 +29,13 @@ impl SmsMessageDto {
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum SmsMessageParseError {
+    #[error("Payload is too large")]
     TooLarge,
+    #[error("Failed to parse datetime")]
     DateTimeParseFailed(time::error::Parse),
+    #[error("IO Error")]
     Io(std::io::Error),
 }
 
