@@ -1,13 +1,16 @@
 #[macro_use]
 extern crate rocket;
 
+use env_logger::Target;
+use log::{info, LevelFilter};
 use rocket::http::Status;
 use rocket::response::status::Custom;
 use rocket::State;
 
 use dto::SmsMessageDto;
 use telegram::TelegramClient;
-use crate::app_config::{AppConfig};
+
+use crate::app_config::AppConfig;
 
 mod dto;
 mod telegram;
@@ -19,7 +22,7 @@ async fn handle_sms(
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
 ) -> Result<&'static str, Custom<&'static str>> {
-    println!("Hook payload: {}", serde_json::to_string(&message)
+    info!("Hook payload: {}", serde_json::to_string(&message)
         .unwrap_or_else(|e| { e.to_string() }));
     if !message.validate_secret(&app_config.api_secret) {
         return Err(Custom(Status::Forbidden, "Token is incorrect"));
@@ -31,11 +34,16 @@ async fn handle_sms(
 
 #[launch]
 fn rocket() -> _ {
+    env_logger::builder()
+        .filter_level(LevelFilter::Info)
+        .target(Target::Stdout)
+        .init();
+
     let app_config = match AppConfig::new() {
         Ok(it) => it,
         Err(e) => panic!("Failed to construct app config: {}", e)
     };
-    println!("{:#?}", app_config);
+    info!("{:#?}", app_config);
 
     let telegram_client = TelegramClient::new(
         app_config.telegram_bot_token.clone(),

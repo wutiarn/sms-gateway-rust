@@ -14,3 +14,5 @@ config = "0.11.0"
 time = { version = "0.3.5", features = ["parsing", "serde-human-readable"] }
 hyper = { version = "0.14.16", features = ["http2", "client"] }
 hyper-tls = "0.5.0"
+log = "0.4"
+env_logger = "0.9.0"

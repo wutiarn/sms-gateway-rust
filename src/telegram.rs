@@ -4,6 +4,7 @@ use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
 use hyper_tls::HttpsConnector;
 use crate::dto::telegram::{SendMessageRequest, SendMessageResponse};
+use log::{info};
 
 pub struct TelegramClient {
     bot_api_token: String,
@@ -40,8 +41,8 @@ impl TelegramClient {
         let response_str = String::from_utf8_lossy(&resp_bytes);
         let response_dto: SendMessageResponse = serde_json::from_slice(&resp_bytes)?;
 
-        println!("Telegram response: {}", response_str);
-        println!("Sent message id: {}", response_dto.result.message_id);
+        info!("Telegram response: {}", response_str);
+        info!("Sent message id: {}", response_dto.result.message_id);
 
         Ok(())
     }
