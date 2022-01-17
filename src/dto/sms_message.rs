@@ -34,9 +34,9 @@ pub enum SmsMessageParseError {
     #[error("Payload is too large")]
     TooLarge,
     #[error("Failed to parse datetime")]
-    DateTimeParseFailed(time::error::Parse),
+    DateTimeParseFailed(#[source] time::error::Parse),
     #[error("IO Error")]
-    Io(std::io::Error),
+    Io(#[source] std::io::Error),
 }
 
 #[rocket::async_trait]
