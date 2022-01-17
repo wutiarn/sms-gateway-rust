@@ -1,3 +1,5 @@
 /target
 /.idea
 /app_config_local.yaml
+/build.sh
+/Dockerfile
