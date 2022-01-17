@@ -27,7 +27,13 @@ async fn handle_sms(
         return Err((Status::Forbidden, "Token is incorrect"));
     }
     let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
-    tg.send_notification(&tg_message_text).await.unwrap();
+    match tg.send_notification(&tg_message_text).await {
+        Ok(_) => {}
+        Err(e) => {
+            log::error!("Failed to send notification: {}", e);
+            return Err((Status::InternalServerError, "Failed to send telegram message"))
+        }
+    };
     Ok("OK")
 }
 

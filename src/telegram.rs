@@ -1,4 +1,3 @@
-use std::error::Error;
 use hyper::{Body, Client, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
@@ -24,7 +23,7 @@ impl TelegramClient {
             bot_api_token,
         }
     }
-    pub async fn send_notification(&self, message: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn send_notification(&self, message: &str) -> Result<(), anyhow::Error> {
         let dto = SendMessageRequest {
             text: &message,
             chat_id: &self.recipient_id,
