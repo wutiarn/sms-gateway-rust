@@ -3,7 +3,7 @@ WORKDIR /app
 COPY . .
 RUN cargo build --release
 
-FROM ubuntu:21.10
+FROM ubuntu:22.04
 WORKDIR /app
 RUN apt update && apt install ca-certificates openssl
 COPY --from=0 /app/target/release/sms-gateway-rust .
