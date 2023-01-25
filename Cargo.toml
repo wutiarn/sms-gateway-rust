@@ -10,10 +10,10 @@ rocket = "0.5.0-rc.1"
 lazy_static = "1.4.0"
 serde = "1.0.133"
 serde_json = "1.0.75"
-config = "0.11.0"
+config = "0.13.3"
 time = { version = "0.3.5", features = ["parsing", "serde-human-readable"] }
 hyper = { version = "0.14.16", features = ["http2", "client"] }
 hyper-tls = "0.5.0"
 log = "0.4"
-env_logger = "0.9.0"
+env_logger = "0.10.0"
 anyhow = "1.0.52"
