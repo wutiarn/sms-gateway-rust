@@ -1,5 +1,5 @@
 use std::io::Cursor;
-use anyhow::{Error};
+use anyhow::{anyhow, Error};
 use rocket::{Request, Response};
 use rocket::http::{Header, Status};
 use rocket::response::Responder;
@@ -31,6 +31,12 @@ impl HttpError {
 impl From<anyhow::Error> for HttpError {
     fn from(e: Error) -> Self {
         HttpError::new(e)
+    }
+}
+
+impl From<serde_json::Error> for HttpError {
+    fn from(e: serde_json::Error) -> Self {
+        HttpError::new(anyhow!("Serde error: {}", e))
     }
 }
 

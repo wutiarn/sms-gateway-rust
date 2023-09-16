@@ -1,7 +1,7 @@
 use std::ops::Deref;
-use crate::dto::classifier::NotificationDto;
+use crate::dto::notification::NotificationDto;
 use crate::dto::sms_message::SmsMessageDto;
-use crate::filter::MessageCategory::{Ignored, Normal};
+use crate::classifier::MessageCategory::{Ignored, Normal};
 
 pub enum MessageCategory {
     Normal,

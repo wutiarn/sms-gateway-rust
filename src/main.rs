@@ -9,34 +9,33 @@ use log::{info, LevelFilter};
 use rocket::figment::Figment;
 use rocket::figment::providers::Env;
 use rocket::http::Status;
-use rocket::serde::json::Json;
 use rocket::State;
 
 use dto::sms_message::SmsMessagesDto;
 use telegram::TelegramClient;
 
 use crate::app_config::AppConfig;
-use crate::dto::classifier::NotificationDto;
+use crate::dto::notification::NotificationDto;
 use crate::error::HttpError;
-use crate::filter::MessageCategory;
+use crate::classifier::MessageCategory;
 
 mod dto;
 mod telegram;
 mod app_config;
 mod error;
-mod filter;
+mod classifier;
 
-#[post("/api/hook/sms", data = "<dto>")]
+#[post("/api/hook/sms", data = "<request>")]
 async fn handle_sms<'t>(
-    dto: Json<SmsMessagesDto>,
+    request: &str,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
 ) -> Result<(Status, &'static str), HttpError> {
-    let dto = dto.into_inner();
-    info!("SMS report: {}", serde_json::to_string(&dto).unwrap());
+    info!("SMS report: {}", request);
+    let dto: SmsMessagesDto = serde_json::from_str(request)?;
     let chat_id = app_config.get_chat_id(&dto.device_id)?;
     for msg in dto.messages {
-        let category = filter::get_sms_category(&msg);
+        let category = classifier::get_sms_category(&msg);
         if let MessageCategory::Ignored = category {
             info!("Ignoring message: {:?}", &msg);
             continue;
@@ -47,14 +46,14 @@ async fn handle_sms<'t>(
     Ok((Status::Ok, "OK"))
 }
 
-#[post("/api/hook/notification", data = "<dto>")]
+#[post("/api/hook/notification", data = "<request>")]
 async fn handle_notification<'t>(
-    dto: Json<NotificationDto>,
+    request: &str,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
 ) -> Result<(Status, &'static str), HttpError> {
-    let dto = dto.into_inner();
-    info!("Notification report: {}", serde_json::to_string(&dto).unwrap());
+    info!("Notification report: {}", request);
+    let dto: NotificationDto = serde_json::from_str(request)?;
     let chat_id = app_config.get_chat_id(&dto.device_id)?;
 
     let app_name = app_config.get_app_name(&dto.package_name);
@@ -63,7 +62,12 @@ async fn handle_notification<'t>(
     }
     let app_name = app_name.unwrap();
 
-    let category = filter::get_notification_category(&dto);
+    if let None = dto.text {
+        info!("Missing notification text: {:?}", &dto);
+        return Ok((Status::Ok, "Missing notification text"));
+    }
+
+    let category = classifier::get_notification_category(&dto);
     if let MessageCategory::Ignored = category {
         info!("Ignoring notification: {:?}", &dto);
         return Ok((Status::Ok, "Notification is filtered"));
@@ -75,7 +79,7 @@ async fn handle_notification<'t>(
         tg_message_text.push_str("\n");
     }
 
-    tg_message_text.push_str(&dto.text);
+    tg_message_text.push_str(&dto.text.unwrap());
     tg_message_text.push_str("\n---\n");
     tg_message_text.push_str(&app_name);
 
