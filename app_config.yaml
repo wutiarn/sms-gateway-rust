@@ -1,3 +1,7 @@
 telegram_bot_token: "TODO"
 device_to_chat_id_mapping:
   test_device_id: 12345678
+android_packages_mapping:
+  "com.idamob.tinkoff.android": "Tinkoff"
+  "ru.mts.money": "МТС Банк"
+  "ru.vtb24.mobilebanking.android": "ВТБ"

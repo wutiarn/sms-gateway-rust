@@ -6,7 +6,8 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
     pub telegram_bot_token: String,
-    pub device_to_chat_id_mapping: HashMap<String, String>
+    pub device_to_chat_id_mapping: HashMap<String, String>,
+    pub android_packages_mapping: HashMap<String, String>
 }
 
 impl AppConfig {
@@ -21,5 +22,9 @@ impl AppConfig {
 
     pub fn get_chat_id<'t>(&'t self, device_id: &'t str) -> Result<&'t str, Error> {
         self.device_to_chat_id_mapping.get(device_id).map(|x| x.deref()).ok_or_else(|| anyhow!("Failed to find chat id for device"))
+    }
+
+    pub fn get_app_name<'t>(&'t self, package_id: &'t str) -> Option<&'t str> {
+        self.android_packages_mapping.get(package_id).map(|x| x.deref())
     }
 }

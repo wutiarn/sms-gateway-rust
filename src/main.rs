@@ -2,21 +2,21 @@
 extern crate rocket;
 
 use std::net::IpAddr;
-use std::ops::Deref;
 use std::str::FromStr;
-use anyhow::{anyhow, Error};
+
 use env_logger::Target;
 use log::{info, LevelFilter};
-use rocket::State;
 use rocket::figment::Figment;
 use rocket::figment::providers::Env;
 use rocket::http::Status;
 use rocket::serde::json::Json;
+use rocket::State;
 
-use dto::SmsMessagesDto;
+use dto::sms_message::SmsMessagesDto;
 use telegram::TelegramClient;
 
 use crate::app_config::AppConfig;
+use crate::dto::notification::NotificationDto;
 use crate::error::HttpError;
 
 mod dto;
@@ -31,12 +31,42 @@ async fn handle_sms<'t>(
     app_config: &State<AppConfig>,
 ) -> Result<(Status, &'static str), HttpError> {
     let dto = dto.into_inner();
-    info!("Hook payload: {}", serde_json::to_string(&dto).unwrap());
+    info!("SMS report: {}", serde_json::to_string(&dto).unwrap());
     let chat_id = app_config.get_chat_id(&dto.device_id)?;
     for msg in dto.messages {
         let tg_message_text = format!("{}\n---\n{} ({})", msg.message, msg.from, dto.carrier_name);
         tg.send_notification(chat_id, &tg_message_text).await?;
     }
+    Ok((Status::Ok, "OK"))
+}
+
+#[post("/api/hook/notification", data = "<dto>")]
+async fn handle_notification<'t>(
+    dto: Json<NotificationDto>,
+    tg: &State<TelegramClient>,
+    app_config: &State<AppConfig>,
+) -> Result<(Status, &'static str), HttpError> {
+    let dto = dto.into_inner();
+    info!("Notification report: {}", serde_json::to_string(&dto).unwrap());
+    let chat_id = app_config.get_chat_id(&dto.device_id)?;
+
+    let app_name = app_config.get_app_name(&dto.package_name);
+    if app_name.is_none() {
+        return Ok((Status::Ok, "Package is ignored"));
+    }
+    let app_name = app_name.unwrap();
+
+    let mut tg_message_text = String::new();
+    if let Some(title) = dto.title {
+        tg_message_text.push_str(&title);
+        tg_message_text.push_str("\n");
+    }
+
+    tg_message_text.push_str(&dto.text);
+    tg_message_text.push_str("\n---\n");
+    tg_message_text.push_str(&app_name);
+
+    tg.send_notification(chat_id, &tg_message_text).await?;
     Ok((Status::Ok, "OK"))
 }
 
@@ -65,7 +95,7 @@ fn rocket() -> _ {
         .merge(Env::prefixed("ROCKET_").global());
 
     rocket::custom(figment)
-        .mount("/", routes![handle_sms])
+        .mount("/", routes![handle_sms, handle_notification])
         .manage(telegram_client)
         .manage(app_config)
 }
