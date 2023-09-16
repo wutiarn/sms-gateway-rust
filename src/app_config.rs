@@ -22,6 +22,6 @@ impl AppConfig {
     }
 
     pub fn get_chat_id<'t>(&'t self, device_id: &'t str) -> Result<&'t str, Error> {
-        self.device_to_chat_id_mapping.get(device_id).and_then(|x| Option::Some(x.deref())).ok_or_else(|| anyhow!("Failed to find chat id for device"))
+        self.device_to_chat_id_mapping.get(device_id).map(|x| x.deref()).ok_or_else(|| anyhow!("Failed to find chat id for device"))
     }
 }
