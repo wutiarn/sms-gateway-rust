@@ -11,6 +11,7 @@ lazy_static! {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SmsMessagesDto {
     pub device_id: String,
     pub career_name: String,
