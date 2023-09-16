@@ -23,10 +23,10 @@ impl TelegramClient {
             bot_api_token,
         }
     }
-    pub async fn send_notification(&self, message: &str) -> Result<(), anyhow::Error> {
+    pub async fn send_notification(&self, chat_id: &str, message: &str) -> Result<(), anyhow::Error> {
         let dto = SendMessageRequest {
-            text: &message,
-            chat_id: &self.recipient_id,
+            text: message,
+            chat_id,
         };
         let dto_json = serde_json::to_string(&dto)?;
         let request = Request::builder()

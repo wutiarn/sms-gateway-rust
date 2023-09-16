@@ -1,3 +1,5 @@
 api_secret: "TODO"
 telegram_bot_token: "TODO"
 telegram_recipient_id: "TODO"
+device_to_chat_id_mapping:
+  test_device_id: 12345678
