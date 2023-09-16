@@ -22,22 +22,18 @@ mod telegram;
 mod app_config;
 mod error;
 
-#[post("/api/hook/sms", data = "<message>")]
+#[post("/api/hook/sms", data = "<dto>")]
 async fn handle_sms(
-    message: Json<SmsMessagesDto>,
+    dto: Json<SmsMessagesDto>,
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
 ) -> Result<(Status, &'static str), HttpError> {
-    let dto = message;
-    // info!("Hook payload: {}", serde_json::to_string(&dto)
-    //     .unwrap_or_else(|e| { e.to_string() }));
-    // if !message.validate_secret(&app_config.api_secret) {
-    //     return HttpError::new(anyhow!("Token is incorrect"))
-    //         .with_status(Status::Forbidden)
-    //         .err();
-    // }
-    // let tg_message_text = format!("{}\n---\n{}", message.body, message.from);
-    // tg.send_notification(&tg_message_text).await?;
+    let dto = dto.into_inner();
+    info!("Hook payload: {}", serde_json::to_string(&dto).unwrap());
+    for msg in dto.messages {
+        let tg_message_text = format!("{}\n---\n{} ({})", msg.message, msg.from, dto.carrier_name);
+        tg.send_notification(&tg_message_text).await?;
+    }
     Ok((Status::Ok, "OK"))
 }
 
