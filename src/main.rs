@@ -39,8 +39,11 @@ async fn handle_sms<'t>(
     Ok((Status::Ok, "OK"))
 }
 
-fn get_chat_id<'t>(app_config: &'t State<AppConfig>, device_id: &'t str) -> Result<&'t String, Error> {
-    app_config.device_to_chat_id_mapping.get(device_id).ok_or_else(||anyhow!("Failed to find chat id for device"))
+fn get_chat_id<'t>(app_config: &'t AppConfig, device_id: &'t str) -> Result<&'t str, Error> {
+    if let Some(found) = app_config.device_to_chat_id_mapping.get(device_id) {
+        return Ok(found);
+    }
+    return Err(anyhow!("Failed to find chat id for device"))
 }
 
 #[launch]
