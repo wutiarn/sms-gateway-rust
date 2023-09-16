@@ -2,24 +2,23 @@ use hyper::{Body, Client, Method, Request};
 use hyper::client::HttpConnector;
 use hyper::header::CONTENT_TYPE;
 use hyper_tls::HttpsConnector;
+use log::info;
+
 use crate::dto::telegram::{SendMessageRequest, SendMessageResponse};
-use log::{info};
 
 pub struct TelegramClient {
     bot_api_token: String,
-    recipient_id: String,
     http_client: Client<HttpsConnector<HttpConnector>>,
 }
 
 impl TelegramClient {
-    pub fn new(bot_api_token: String, recipient_id: String) -> Self {
+    pub fn new(bot_api_token: String) -> Self {
         let https = HttpsConnector::new();
         let client = Client::builder()
             .build(https);
 
         TelegramClient {
             http_client: client,
-            recipient_id,
             bot_api_token,
         }
     }

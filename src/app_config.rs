@@ -5,9 +5,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
-    pub api_secret: String,
     pub telegram_bot_token: String,
-    pub telegram_recipient_id: String,
     pub device_to_chat_id_mapping: HashMap<String, String>
 }
 

@@ -54,8 +54,7 @@ fn rocket() -> _ {
     info!("{:#?}", app_config);
 
     let telegram_client = TelegramClient::new(
-        app_config.telegram_bot_token.clone(),
-        app_config.telegram_recipient_id.clone(),
+        app_config.telegram_bot_token.clone()
     );
 
     let mut config = rocket::Config::default();
