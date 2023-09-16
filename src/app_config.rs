@@ -1,18 +1,33 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use anyhow::{anyhow, Error};
+use config::FileFormat;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
     pub telegram_bot_token: String,
     pub device_to_chat_id_mapping: HashMap<String, String>,
-    pub android_packages_mapping: HashMap<String, String>
+    pub android_packages_mapping: HashMap<String, String>,
+    pub log_requests: bool,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        AppConfig {
+            telegram_bot_token: "".to_string(),
+            device_to_chat_id_mapping: Default::default(),
+            android_packages_mapping: Default::default(),
+            log_requests: false
+        }
+    }
 }
 
 impl AppConfig {
     pub fn new() -> Result<Self, config::ConfigError> {
+        let defaults_file = std::include_str!("../app_config.defaults.yaml");
         let c = config::Config::builder()
+            .add_source(config::File::from_str(defaults_file, FileFormat::Yaml))
             .add_source(config::File::with_name("app_config").required(false))
             .add_source(config::File::with_name("app_config_local").required(false))
             .add_source(config::Environment::with_prefix("APP"))
