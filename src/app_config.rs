@@ -29,7 +29,6 @@ impl AppConfig {
         let c = config::Config::builder()
             .add_source(config::File::from_str(defaults_file, FileFormat::Yaml))
             .add_source(config::File::with_name("app_config").required(false))
-            .add_source(config::File::with_name("app_config_local").required(false))
             .add_source(config::Environment::with_prefix("APP"))
             .build()?;
         c.try_deserialize()
