@@ -1,4 +1,4 @@
 pub mod sms_message;
 pub mod telegram;
-pub mod notification;
+pub mod classifier;
 

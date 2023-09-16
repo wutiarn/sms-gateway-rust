@@ -16,13 +16,15 @@ use dto::sms_message::SmsMessagesDto;
 use telegram::TelegramClient;
 
 use crate::app_config::AppConfig;
-use crate::dto::notification::NotificationDto;
+use crate::dto::classifier::NotificationDto;
 use crate::error::HttpError;
+use crate::filter::MessageCategory;
 
 mod dto;
 mod telegram;
 mod app_config;
 mod error;
+mod filter;
 
 #[post("/api/hook/sms", data = "<dto>")]
 async fn handle_sms<'t>(
@@ -34,6 +36,11 @@ async fn handle_sms<'t>(
     info!("SMS report: {}", serde_json::to_string(&dto).unwrap());
     let chat_id = app_config.get_chat_id(&dto.device_id)?;
     for msg in dto.messages {
+        let category = filter::get_sms_category(&msg);
+        if let MessageCategory::Ignored = category {
+            info!("Ignoring message: {:?}", &msg);
+            continue;
+        }
         let tg_message_text = format!("{}\n---\n{} ({})", msg.message, msg.from, dto.carrier_name);
         tg.send_notification(chat_id, &tg_message_text).await?;
     }
@@ -55,6 +62,12 @@ async fn handle_notification<'t>(
         return Ok((Status::Ok, "Package is ignored"));
     }
     let app_name = app_name.unwrap();
+
+    let category = filter::get_notification_category(&dto);
+    if let MessageCategory::Ignored = category {
+        info!("Ignoring notification: {:?}", &dto);
+        return Ok((Status::Ok, "Notification is filtered"));
+    }
 
     let mut tg_message_text = String::new();
     if let Some(title) = dto.title {
