@@ -36,10 +36,10 @@ impl TelegramClient {
 
         let response = self.http_client.request(request).await?;
         let resp_bytes = hyper::body::to_bytes(response).await?;
-        let response_str = String::from_utf8_lossy(&resp_bytes);
-        let response_dto: SendMessageResponse = serde_json::from_slice(&resp_bytes)?;
+        // let response_str = String::from_utf8_lossy(&resp_bytes);
+        // info!("Telegram response: {}", response_str);
 
-        info!("Telegram response: {}", response_str);
+        let response_dto: SendMessageResponse = serde_json::from_slice(&resp_bytes)?;
         info!("Sent message id: {}", response_dto.result.message_id);
 
         Ok(())

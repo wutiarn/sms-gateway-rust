@@ -31,13 +31,15 @@ async fn handle_sms<'t>(
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
 ) -> Result<(Status, &'static str), HttpError> {
-    info!("SMS report: {}", request);
+    if app_config.log_requests {
+        info!("SMS report: {}", request);
+    }
     let dto: SmsMessagesDto = serde_json::from_str(request)?;
     let chat_id = app_config.get_chat_id(&dto.device_id)?;
     for msg in dto.messages {
         let category = classifier::get_sms_category(&msg);
         if let MessageCategory::Ignored = category {
-            info!("Ignoring message: {:?}", &msg);
+            info!("Ignoring message: {}", &request);
             continue;
         }
         let tg_message_text = format!("{}\n---\n{} ({})", msg.message, msg.from, dto.carrier_name);
@@ -52,7 +54,9 @@ async fn handle_notification<'t>(
     tg: &State<TelegramClient>,
     app_config: &State<AppConfig>,
 ) -> Result<(Status, &'static str), HttpError> {
-    info!("Notification report: {}", request);
+    if app_config.log_requests {
+        info!("Notification report: {}", request);
+    }
     let dto: NotificationDto = serde_json::from_str(request)?;
     let chat_id = app_config.get_chat_id(&dto.device_id)?;
 
